@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract DegenGamingToken is ERC20, Ownable {
+    struct GameItem {
+        string name;
+        uint256 cost;
+    }
+
+    GameItem[] public storeItems;
+    mapping(address => mapping(uint256 => uint256)) public playerItemBalances;
+
+    constructor() ERC20("Degen", "DGN") {
+        _mint(msg.sender, 100 * 10 ** decimals()); // Mint initial supply
+
+        // Add some example in-game items to the store
+        storeItems.push(GameItem("Sword", 100));
+        storeItems.push(GameItem("Shield", 75));
+        storeItems.push(GameItem("Health Potion", 50));
+    }
+
+    function mint(address account, uint256 amount) public onlyOwner {
+        _mint(account, amount);
+    }
+
+    function redeem(uint256 itemIndex) public {
+        require(itemIndex < storeItems.length, "Invalid item index");
+        uint256 cost = storeItems[itemIndex].cost;
+        require(balanceOf(msg.sender) >= cost, "Insufficient balance");
+
+        // Deduct tokens and add the item to the player's inventory
+        playerItemBalances[msg.sender][itemIndex] += 1;
+
+        
+
+        // Burn the tokens after the redemption
+        _burn(msg.sender, cost);
+    }
+
+    function getPlayerItemBalance(address player, uint256 itemIndex) public view returns (uint256) {
+        return playerItemBalances[player][itemIndex];
+    }
+
+    event RedeemedItem(address indexed player, uint256 itemIndex);
+}
